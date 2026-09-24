@@ -1,10 +1,10 @@
-name: Android Build
+name: Android Build 0.3.3
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'Baudetail-0.3.2-Projekt.zip'
+      - 'Baudetail-0.3.3-Projekt.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -27,17 +27,20 @@ jobs:
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Extract Baudetail project
-        run: unzip -q Baudetail-0.3.2-Projekt.zip -d build-src
+        run: unzip -q Baudetail-0.3.3-Projekt.zip -d build-src
 
-      - name: Build debug APK
-        working-directory: build-src/Baudetail-0.3.2-work
+      - name: Run core tests
+        working-directory: build-src/baudetail033-work
         run: |
           chmod +x gradlew
+          ./gradlew --no-daemon :drawing-core:test --stacktrace
+
+      - name: Build debug APK
+        working-directory: build-src/baudetail033-work
+        run: |
           ./gradlew --no-daemon :app:assembleDebug --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Baudetail-0.3.2-debug
-          path: build-src/Baudetail-0.3.2-work/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          name: Baudetail-0.3.3
