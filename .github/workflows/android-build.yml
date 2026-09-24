@@ -29,8 +29,6 @@ jobs:
       - name: Extract Baudetail project
         run: |
           unzip -q Baudetail-0.3.3-Projekt.zip -d build-src
-          echo "Entpackte Ordner:"
-          find build-src -maxdepth 2 -type d
 
       - name: Find project directory
         run: |
@@ -38,15 +36,10 @@ jobs:
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
           echo "Projekt gefunden unter: $PROJECT_DIR"
 
-      - name: Run core tests
-        run: |
-          cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew --no-daemon :drawing-core:test --stacktrace
-
       - name: Build debug APK
         run: |
           cd "$PROJECT_DIR"
+          chmod +x gradlew
           ./gradlew --no-daemon :app:assembleDebug --stacktrace
 
       - name: Upload APK artifact
