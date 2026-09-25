@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'Baudetail-0.3.3-Projekt.zip'
+      - 'Baudetail-0.3.3-Projekt-Hoehenformel-korrigiert.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
 
       - name: Extract Baudetail project
         run: |
-          unzip -q Baudetail-0.3.3-Projekt.zip -d build-src
+          unzip -q Baudetail-0.3.3-Projekt-Hoehenformel-korrigiert.zip -d build-src
 
       - name: Find project directory
         run: |
