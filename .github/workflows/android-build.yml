@@ -1,10 +1,10 @@
-name: Android Build 0.3.3 Snap Beschriftung
+name: Android Build 0.3.4
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'Baudetail-0.3.3-Projekt-Snap-Beschriftung.zip'
+      - 'Baudetail-0.3.4-Projekt.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
 
       - name: Extract Baudetail project
         run: |
-          unzip -q Baudetail-0.3.3-Projekt-Snap-Beschriftung.zip -d build-src
+          unzip -q Baudetail-0.3.4-Projekt.zip -d build-src
 
       - name: Find project directory
         run: |
@@ -45,6 +45,6 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Baudetail-0.3.3-snap-beschriftung-debug
+          name: Baudetail-0.3.4-debug
           path: build-src/**/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
