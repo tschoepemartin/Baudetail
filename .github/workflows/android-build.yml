@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'Baudetail-0.3.5-Projekt.zip'
+      - 'Baudetail-0.3.5*.zip'
       - '.github/workflows/android-build.yml'
 
 jobs:
@@ -26,15 +26,19 @@ jobs:
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Extract Baudetail project
+      - name: Find and extract Baudetail project
         run: |
-          unzip -q Baudetail-0.3.5-Projekt.zip -d build-src
+          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'Baudetail-0.3.5*.zip' | head -n 1)
+          echo "ZIP gefunden: $ZIP_FILE"
+          test -n "$ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d build-src
 
       - name: Find project directory
         run: |
           PROJECT_DIR=$(find build-src -name gradlew -type f -exec dirname {} \; | head -n 1)
           echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
           echo "Projekt gefunden unter: $PROJECT_DIR"
+          test -n "$PROJECT_DIR"
 
       - name: Build debug APK
         run: |
