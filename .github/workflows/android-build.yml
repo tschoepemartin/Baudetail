@@ -1,54 +1,106 @@
-name: Android Build 0.6.10
+name: Build Baudetail APK
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     paths:
-      - 'Baudetail-0.6.10*.zip'
-      - '.github/workflows/android-build.yml'
+      - "Baudetail-*-Projekt.zip"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Java 17 einrichten
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
-      - name: Install Android SDK 35
+      - name: Neueste Baudetail-Version ermitteln
+        shell: bash
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          ZIP=$(find . -maxdepth 1 -type f -name 'Baudetail-*-Projekt.zip' \
+            | sed 's#^\./##' \
+            | sort -V \
+            | tail -n 1)
 
-      - name: Find and extract Baudetail project
+          if [ -z "$ZIP" ]; then
+            echo "FEHLER: Keine Baudetail-Projekt-ZIP gefunden."
+            exit 1
+          fi
+
+          VERSION=$(echo "$ZIP" \
+            | sed -E 's/^Baudetail-([0-9]+\.[0-9]+\.[0-9]+)-Projekt\.zip$/\1/')
+
+          if [ -z "$VERSION" ] || [ "$VERSION" = "$ZIP" ]; then
+            echo "FEHLER: Versionsnummer konnte nicht aus $ZIP gelesen werden."
+            exit 1
+          fi
+
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+          echo "Gefundene Version: $VERSION"
+          echo "Projekt-ZIP: $ZIP"
+
+      - name: Projekt entpacken
+        shell: bash
         run: |
-          ZIP_FILE=$(find . -maxdepth 1 -type f -name 'Baudetail-0.6.10*.zip' | head -n 1)
-          echo "ZIP gefunden: $ZIP_FILE"
-          test -n "$ZIP_FILE"
-          unzip -q "$ZIP_FILE" -d build-src
+          mkdir -p build-project
+          unzip -q "$ZIP" -d build-project
 
-      - name: Find project directory
+          echo "Projekt wurde entpackt:"
+          ls -la build-project
+
+      - name: Gradle-Projekt finden
+        shell: bash
         run: |
-          PROJECT_DIR=$(find build-src -name gradlew -type f -exec dirname {} \; | head -n 1)
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          echo "Projekt gefunden unter: $PROJECT_DIR"
-          test -n "$PROJECT_DIR"
+          WRAPPER=$(find build-project -name gradlew -type f | head -n 1)
 
-      - name: Build debug APK
+          if [ -z "$WRAPPER" ]; then
+            echo "FEHLER: gradlew wurde nicht gefunden."
+            exit 1
+          fi
+
+          chmod +x "$WRAPPER"
+
+          PROJECT_DIR=$(dirname "$WRAPPER")
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+
+          echo "Gradle-Projekt: $PROJECT_DIR"
+
+      - name: Debug APK bauen
+        shell: bash
         run: |
           cd "$PROJECT_DIR"
-          chmod +x gradlew
-          ./gradlew --no-daemon :app:assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace
 
-      - name: Upload APK artifact
+      - name: APK finden und umbenennen
+        shell: bash
+        run: |
+          APK=$(find "$PROJECT_DIR" \
+            -type f \
+            -path "*/outputs/apk/debug/*.apk" \
+            | head -n 1)
+
+          if [ -z "$APK" ]; then
+            echo "FEHLER: Keine gebaute APK gefunden."
+            exit 1
+          fi
+
+          cp "$APK" "Baudetail-${VERSION}.apk"
+
+          echo "APK erstellt: Baudetail-${VERSION}.apk"
+
+      - name: APK bereitstellen
         uses: actions/upload-artifact@v4
         with:
-          name: Baudetail-0.6.10-debug
-          path: build-src/**/app/build/outputs/apk/debug/*.apk
+          name: Baudetail-${{ env.VERSION }}
+          path: Baudetail-${{ env.VERSION }}.apk
           if-no-files-found: error
