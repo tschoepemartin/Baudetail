@@ -1,3 +1,4 @@
+
 name: Build Baudetail APK
 
 on:
@@ -12,15 +13,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     steps:
       - name: Repository auschecken
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Java 17 einrichten
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
+          cache-dependency-path: "**/*.gradle*"
 
       - name: Neueste Baudetail-Version ermitteln
         shell: bash
